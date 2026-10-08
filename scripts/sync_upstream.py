@@ -1,6 +1,9 @@
 """
-Script tu dong kiem tra va dong bo cap nhat tu repo goc (upstream)
-DataTalksClub/data-engineering-zoomcamp ve nhanh main va vietnamese.
+Script tu dong kiem tra va dong bo cap nhat tu repo goc (upstream) DataTalksClub:
+1. Keo cac cap nhat moi nhat tu repo goc ve nhanh phu 'english' (ban tieng Anh goc).
+2. Dong bo va merge cac cap nhat tu 'english' vao nhanh chinh 'main' (ban tieng Viet).
+3. Day (push) ca 2 nhanh len GitHub ca nhan.
+4. Thong bao danh sach file moi/thay doi de tien hanh dich noi dung moi sang tieng Viet.
 """
 
 import subprocess
@@ -26,9 +29,11 @@ def run_cmd(cmd, check=True):
     return res
 
 def main():
-    print("==========================================================")
+    print("==================================================================")
     print("   KIEM TRA VA DONG BO CAP NHAT TU REPO GOC (UPSTREAM)")
-    print("==========================================================\n")
+    print("   - Nhanh phu 'english': Luu tru ban goc tieng Anh tu DataTalksClub")
+    print("   - Nhanh chinh 'main': Ban dich tieng Viet phuc vu hoc tap")
+    print("==================================================================\n")
 
     # 1. Kiem tra va them remote upstream neu chua co
     remotes = subprocess.run("git remote", shell=True, text=True, capture_output=True).stdout.split()
@@ -39,16 +44,16 @@ def main():
         print("[OK] Da ket noi remote upstream.")
 
     # 2. Fetch du lieu moi tu upstream
-    print("\nDang tai du lieu moi nhat tu DataTalksClub...")
+    print("\nDang kiem tra du lieu moi tu DataTalksClub...")
     run_cmd("git fetch upstream")
 
-    # 3. Kiem tra so commit moi
-    diff_res = subprocess.run("git log HEAD..upstream/main --oneline", shell=True, text=True, capture_output=True)
+    # 3. Kiem tra so commit moi so voi nhanh english
+    diff_res = subprocess.run("git log english..upstream/main --oneline", shell=True, text=True, capture_output=True)
     commits = diff_res.stdout.strip().splitlines() if diff_res.stdout.strip() else []
 
     if not commits:
-        print("\n[OK] Tuyet voi! Tai lieu cua ban da hoan toan khop voi ban moi nhat tu repo goc.")
-        print("Khong co commit moi nao tu upstream can cap nhat.")
+        print("\n[OK] Nhanh 'english' va 'main' da hoan toan khop voi ban moi nhat tu repo goc!")
+        print("Khong co cap nhat moi nao tu DataTalksClub can xu ly.")
         return
 
     print(f"\n[!] Phat hien {len(commits)} commit moi tu repo goc:")
@@ -57,34 +62,35 @@ def main():
 
     # 4. Kiem tra cac file thay doi
     changed_files = subprocess.run(
-        "git diff --name-only HEAD upstream/main", shell=True, text=True, capture_output=True
+        "git diff --name-only english upstream/main", shell=True, text=True, capture_output=True
     ).stdout.strip().splitlines()
 
-    print("\nDanh sach cac file co thay doi tu upstream:")
+    print("\nDanh sach cac file co thay doi/moi tu upstream:")
     for f in changed_files:
         print(f"   - {f}")
 
-    # 5. Hoi nguoi dung co muon merge khong
-    confirm = input("\nBan co muon tu dong merge cac thay doi nay vao main va vietnamese khong? (y/n): ").strip().lower()
+    # 5. Hoi nguoi dung co muon dong bo khong
+    confirm = input("\nBan co muon tu dong pull ve 'english' va update sang 'main' (tieng Viet) khong? (y/n): ").strip().lower()
     if confirm != 'y':
-        print("Da huy thao tac merge.")
+        print("Da huy thao tac dong bo.")
         return
 
-    # 6. Cap nhat main
-    print("\nDang cap nhat nhanh main...")
-    run_cmd("git checkout main")
+    # 6. Cap nhat nhanh english (ban tieng Anh goc)
+    print("\nDang cap nhat nhanh phu 'english'...")
+    run_cmd("git checkout english")
     run_cmd("git pull upstream main")
+    run_cmd("git push origin english")
+
+    # 7. Merge cac thay doi tu english vao nhanh main (tieng Viet)
+    print("\nDang merge cap nhat sang nhanh chinh 'main' (tieng Viet)...")
+    run_cmd("git checkout main")
+    run_cmd("git merge english -m 'merge: Dong bo cap nhat moi tu upstream vao ban tieng Viet'")
     run_cmd("git push origin main")
 
-    # 7. Merge vao vietnamese
-    print("\nDang merge vao nhanh vietnamese...")
-    run_cmd("git checkout vietnamese")
-    run_cmd("git merge main -m 'merge: Dong bo cap nhat moi tu upstream/main'")
-    run_cmd("git push origin vietnamese")
-
     print("\n[OK] Hoan tat dong bo!")
-    print("Cac file moi da duoc cap nhat vao nhanh 'vietnamese'.")
-    print("Ban chi can nhan vao hop chat AI de nho AI dich tiep cac file moi cap nhat!")
+    print("1. Nhanh 'english' da luu tru ban goc tieng Anh moi nhat.")
+    print("2. Nhanh 'main' da nhan cac tap tin va cap nhat moi.")
+    print("\nBan hay nhan vao hop chat AI de nho AI dich ngay cac file moi sang tieng Viet!")
 
 if __name__ == "__main__":
     main()
