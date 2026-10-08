@@ -2,29 +2,30 @@
 prev_url: 01-introduction.md
 next_url: 03-dockerizing-pipeline.md
 ---
-# Virtual Environments and Data Pipelines
+# Môi Trường Ảo Và Đường Ống Dữ Liệu (Virtual Environments & Data Pipelines)
 
-A **data pipeline** is a service that receives data as input and outputs more data. For example, reading a CSV file, transforming the data somehow and storing it as a table in a PostgreSQL database.
+Một **đường ống dữ liệu (data pipeline)** là một tiến trình hoặc dịch vụ tiếp nhận dữ liệu đầu vào (input), thực hiện các biến đổi cần thiết và xuất ra dữ liệu đầu ra (output). Ví dụ: đọc một tệp CSV thô, làm sạch và chuẩn hóa dữ liệu, sau đó lưu trữ vào một bảng trong cơ sở dữ liệu PostgreSQL.
 
 ```mermaid
 graph LR
-    A[CSV File] --> B[Data Pipeline]
-    B --> C[Parquet File]
-    B --> D[PostgreSQL Database]
-    B --> E[Data Warehouse]
+    A[Tệp CSV thô] --> B[Đường Ống Dữ Liệu]
+    B --> C[Tệp Parquet]
+    B --> D[Cơ Sở Dữ Liệu PostgreSQL]
+    B --> E[Kho Dữ Liệu Data Warehouse]
     style B fill:#4CAF50,stroke:#333,stroke-width:2px,color:#fff
 ```
 
+Trong phần thực hành này, chúng ta sẽ xây dựng các đường ống dữ liệu thực tế nhằm:
+- Tải dữ liệu CSV từ internet.
+- Chuyển đổi và làm sạch dữ liệu với thư viện `pandas`.
+- Nạp dữ liệu vào cơ sở dữ liệu PostgreSQL để phục vụ truy vấn phân tích.
+- Xử lý dữ liệu theo từng khối (chunking) để xử lý mượt mà các tệp dữ liệu dung lượng lớn hàng trăm megabyte đến gigabyte mà không làm tràn RAM.
 
-In this workshop, we'll build pipelines that:
-- Download CSV data from the web
-- Transform and clean the data with pandas
-- Load it into PostgreSQL for querying
-- Process data in chunks to handle large files
+---
 
-## Creating a Simple Pipeline
+## Xây Dựng Một Pipeline Đơn Giản (Creating a Simple Pipeline)
 
-Let's create an example pipeline. First, create a directory `pipeline` and inside, create a file  `pipeline.py`:
+Hãy bắt đầu bằng việc tạo một đường ống đơn giản. Đầu tiên, tạo một thư mục `pipeline` và tạo tệp `pipeline.py` bên trong:
 
 ```python
 import sys
@@ -34,7 +35,7 @@ day = int(sys.argv[1])
 print(f"Running pipeline for day {day}")
 ```
 
-Now let's add pandas:
+Bây giờ hãy bổ sung thêm thư viện pandas để biến đổi dữ liệu:
 
 ```python
 import pandas as pd
@@ -45,74 +46,85 @@ print(df.head())
 df.to_parquet(f"output_day_{sys.argv[1]}.parquet")
 ```
 
-## Why Virtual Environments?
+---
 
-We need pandas, but we don't have it. We want to test it before we run things in a container.
+## Tại Sao Phải Dùng Môi Trường Ảo? (Why Virtual Environments?)
 
-We can install it with `pip`:
+Để chạy script trên, chúng ta cần thư viện `pandas` và `pyarrow`. Nếu chạy lệnh cài đặt toàn cục:
 
 ```bash
 pip install pandas pyarrow
 ```
 
-But this installs it globally on your system. This can cause conflicts if different projects need different versions of the same package.
+Các thư viện này sẽ được cài thẳng vào hệ thống máy tính của bạn (global environment). Điều này rất dễ gây xung đột phụ thuộc (dependency conflict) khi các dự án khác nhau lại đòi hỏi các phiên bản thư viện hoặc phiên bản Python khác nhau.
 
-Instead, we want to use a **virtual environment** - an isolated Python environment that keeps dependencies for this project separate from other projects and from your system Python.
+Vì vậy, giải pháp tiêu chuẩn là sử dụng **Môi trường ảo (Virtual Environment)** — một môi trường Python độc lập và tách biệt hoàn toàn dành riêng cho từng dự án.
 
-## Using uv - Modern Python Package Manager
+---
 
-We'll use `uv` - a modern, fast Python package and project manager written in Rust. It's much faster than pip and handles virtual environments automatically.
+## Sử Dụng `uv` - Trình Quản Lý Gói Python Hiện Đại Và Siêu Tốc
+
+Trong khóa học này, chúng ta sử dụng **`uv`** — trình quản lý dự án và gói Python thế hệ mới được viết bằng ngôn ngữ Rust. `uv` nhanh gấp 10-100 lần so với `pip` truyền thống và tự động quản lý môi trường ảo cực kỳ gọn gàng.
+
+Cài đặt `uv`:
 
 ```bash
 pip install uv
 ```
 
-Now initialize a Python project with uv:
+Khởi tạo một dự án Python mới với `uv` sử dụng Python 3.13:
 
 ```bash
 uv init --python=3.13
 ```
 
-This creates a `pyproject.toml` file for managing dependencies and a `.python-version` file.
+Lệnh này sẽ tự động sinh tệp `pyproject.toml` để quản lý các gói phụ thuộc và tệp `.python-version`.
 
-### Comparing Python Versions
+### So Sánh Các Phiên Bản Python
+
+Kiểm tra đường dẫn và phiên bản Python trong môi trường ảo so với Python toàn cục:
 
 ```bash
-uv run which python  # Python in the virtual environment
+# Python bên trong môi trường ảo của dự án
+uv run which python  
 uv run python -V
 
-which python        # System Python
+# Python toàn cục của hệ điều hành
+which python        
 python -V
 ```
 
-You'll see they're different - `uv run` uses the isolated environment.
+Bạn sẽ thấy hai môi trường hoàn toàn tách biệt.
 
-### Adding Dependencies
+### Cài Đặt Gói Phụ Thuộc (Adding Dependencies)
 
-Now let's add pandas:
+Cài đặt `pandas` và `pyarrow` vào dự án:
 
 ```bash
 uv add pandas pyarrow
 ```
 
-This adds pandas to your `pyproject.toml` and installs it in the virtual environment.
+`uv` sẽ tự động tải, cài đặt vào môi trường ảo và ghi nhận phiên bản vào tệp `pyproject.toml`.
 
-### Running the Pipeline
+### Thực Thi Đường Ống Dữ Liệu (Running the Pipeline)
 
-Now we can execute the file:
+Bây giờ chúng ta có thể chạy script thông qua `uv`:
 
 ```bash
 uv run python pipeline.py 10
 ```
 
-We will see:
+Kết quả hiển thị trên màn hình:
 
 * `['pipeline.py', '10']`
-* `job finished successfully for day = 10`
+* `Running pipeline for day 10`
+* Tệp `output_day_10.parquet` được tạo ra thành công.
 
-## Git Configuration
+---
 
-This script produces a binary (parquet) file, so let's make sure we don't accidentally commit it to git by adding parquet extensions to `.gitignore`:
+## Cấu Hình Git (.gitignore)
+
+Script trên sinh ra tệp nhị phân nén Parquet. Trong Data Engineering, chúng ta không commit các tệp dữ liệu lớn vào Git repository. Hãy thêm định dạng này vào file `.gitignore`:
 
 ```
 *.parquet

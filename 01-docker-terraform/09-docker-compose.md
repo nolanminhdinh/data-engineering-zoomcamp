@@ -2,12 +2,11 @@
 prev_url: 08-dockerizing-ingestion.md
 next_url: 10-sql-refresher.md
 ---
-# Docker Compose
+# Điều Phối Đa Container Với Docker Compose (Docker Compose)
 
-`docker-compose` allows us to launch multiple containers using a single configuration file, so that we don't have to run multiple complex `docker run` commands separately.
+`docker compose` cho phép chúng ta định nghĩa và khởi chạy đồng thời nhiều containers chỉ bằng một tệp cấu hình duy nhất, giúp loại bỏ hoàn toàn sự phức tạp khi phải gõ nhiều lệnh `docker run` dài dòng riêng lẻ.
 
-
-Docker compose makes use of YAML files. Here's the `docker-compose.yaml` file:
+Docker Compose sử dụng định dạng tệp YAML. Dưới đây là nội dung tệp `docker-compose.yaml`:
 
 ```yaml
 services:
@@ -37,63 +36,73 @@ volumes:
   pgadmin_data:
 ```
 
-### Explanation
+### Giải Thích Cấu Trúc:
 
-* We don't have to specify a network because `docker compose` takes care of it: every single container (or "service", as the file states) will run within the same network and will be able to find each other according to their names (`pgdatabase` and `pgadmin` in this example).
-* All other details from the `docker run` commands (environment variables, volumes and ports) are mentioned accordingly in the file following YAML syntax.
+* **Tự động tạo mạng ảo (Network)**: Bạn không cần phải tạo mạng ảo bằng tay nữa. Docker Compose tự động tạo một mạng mặc định cho toàn bộ dự án. Tất cả các dịch vụ (services) khai báo trong file sẽ tự động nằm chung mạng và nhận diện được nhau theo tên dịch vụ (`pgdatabase` và `pgadmin`).
+* Toàn bộ cấu hình biến môi trường (`environment`), ổ đĩa (`volumes`), và cổng mạng (`ports`) đều được khai báo rõ ràng, chuẩn hóa theo cú pháp YAML.
 
-## Start Services with Docker Compose
+---
 
-We can now run Docker compose by running the following command from the same directory where `docker-compose.yaml` is found. Make sure that all previous containers aren't running anymore:
+## 1. Khởi Chạy Các Dịch Vụ Với Docker Compose
+
+Hãy đảm bảo bạn đã tắt các container chạy thử trước đó, sau đó đứng tại thư mục chứa file `docker-compose.yaml` và chạy lệnh:
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
-### Detached Mode
+### Chế Độ Chạy Ngầm (Detached Mode)
 
-If you want to run the containers again in the background rather than in the foreground (thus freeing up your terminal), you can run them in detached mode:
+Để giải phóng terminal và chạy toàn bộ dịch vụ dưới nền (background):
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-## Stop Services
+---
 
-You will have to press `Ctrl+C` in order to shut down the containers when running in foreground mode. The proper way of shutting them down is with this command:
+## 2. Dừng Và Xóa Các Dịch Vụ
+
+Nếu chạy ở chế độ thông thường, bạn nhấn tổ hợp phím `Ctrl + C` để dừng. Lệnh chuẩn mực để dừng và dọn sạch tài nguyên:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
-## Other Useful Commands
+---
+
+## 3. Các Lệnh Tiện Ích Thường Dùng
 
 ```bash
-# View logs
-docker-compose logs
+# Xem toàn bộ nhật ký (logs) của các container đang chạy
+docker compose logs
 
-# Stop and remove volumes
-docker-compose down -v
+# Dừng hệ thống và xóa sạch cả các named volumes (xóa toàn bộ dữ liệu database)
+docker compose down -v
 ```
 
-## Benefits of Docker Compose
+### Lợi Ích Lớn Của Docker Compose:
 
-- Single command to start all services
-- Automatic network creation
-- Easy configuration management
-- Declarative infrastructure
+- Khởi chạy toàn bộ hệ thống chỉ với một lệnh duy nhất (`docker compose up`).
+- Quản lý mạng nội bộ hoàn toàn tự động.
+- Cấu hình hạ tầng mang tính khai báo (Declarative Infrastructure), dễ lưu trữ và theo dõi thay đổi qua Git.
 
-## Running the Ingestion Script with Docker Compose
+---
 
-If you want to re-run the dockerized ingest script when you run Postgres and pgAdmin with `docker compose`, you will have to find the name of the virtual network that Docker compose created for the containers.
+## 4. Chạy Script Nạp Dữ Liệu Kết Hợp Với Mạng Của Docker Compose
+
+Khi bạn khởi chạy PostgreSQL và pgAdmin bằng Docker Compose, Docker sẽ tự động tạo một mạng ảo có tên theo tiền tố thư mục, ví dụ: `pipeline_default` hoặc `01-docker-terraform_default`.
+
+Kiểm tra tên mạng Docker Compose vừa tạo:
 
 ```bash
-# check the network link:
 docker network ls
+```
 
-# it's pipeline_default (or similar based on directory name)
-# now run the script:
-docker run -it --rm\
+Sau đó, chạy container nạp dữ liệu trỏ vào mạng này:
+
+```bash
+docker run -it --rm \
   --network=pipeline_default \
   taxi_ingest:v001 \
     --pg-user=root \

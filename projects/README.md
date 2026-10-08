@@ -1,177 +1,151 @@
-## Course Project
+# Đồ Án Tốt Nghiệp Khóa Học (Course Project)
 
-[🎥 Projects how-to (watch it!)](https://www.youtube.com/watch?v=BL0E8xO8OnE)
+[🎥 Video hướng dẫn thực hiện đồ án (Bắt buộc xem!)](https://www.youtube.com/watch?v=BL0E8xO8OnE)
 
+---
 
-### Objective
+### Mục Tiêu (Objective)
 
-The goal of this project is to apply everything we have learned
-in this course to build an end-to-end data pipeline.
+Mục tiêu của đồ án cuối khóa là vận dụng tổng hợp toàn bộ các kỹ năng và công nghệ đã học trong suốt khóa học để tự tay xây dựng một đường ống dữ liệu toàn diện (end-to-end data pipeline).
 
-### Problem statement
+### Đề Bài Dự Án (Problem Statement)
 
-Develop a dashboard with two tiles by:
+Xây dựng một bảng điều khiển phân tích (Dashboard) với ít nhất 2 biểu đồ (tiles) thông qua các bước:
 
-* Selecting a dataset of interest (see [Datasets](#datasets))
-* Creating a pipeline for processing this dataset and putting it to a datalake
-* Creating a pipeline for moving the data from the lake to a data warehouse
-* Transforming the data in the data warehouse: prepare it for the dashboard
-* Building a dashboard to visualize the data
+* Lựa chọn một bộ dữ liệu quan tâm (xem [Danh sách gợi ý bộ dữ liệu](#danh-sách-bộ-dữ-liệu-datasets)).
+* Xây dựng đường ống dữ liệu để xử lý và nạp tập dữ liệu này vào Hồ dữ liệu (Data Lake).
+* Xây dựng đường ống chuyển dữ liệu từ Data Lake vào Kho dữ liệu (Data Warehouse).
+* Biến đổi dữ liệu (Transformations) trong Data Warehouse: mô hình hóa và chuẩn bị bảng dữ liệu phục vụ trực quan hóa.
+* Xây dựng Dashboard để hiển thị các chỉ số và phân tích hữu ích từ dữ liệu.
 
-### Datasets you cannot use
+### Quy Định Về Dữ Liệu Không Được Phép Sử Dụng (Datasets You Cannot Use)
 
-The NYC taxi dataset is used throughout the course modules and homework. It cannot be used for the project. Pick any other dataset.
+> [!WARNING]
+> Bộ dữ liệu New York Taxi (NYC Taxi dataset) đã được sử dụng xuyên suốt các bài giảng và bài tập về nhà của khóa học. **Bạn KHÔNG ĐƯỢC PHÉP sử dụng bộ dữ liệu NYC Taxi cho đồ án cuối khóa.** Hãy chọn một bộ dữ liệu thực tế khác.
 
+---
 
-## Data Pipeline 
+## Lựa Chọn Đường Ống Dữ Liệu (Data Pipeline)
 
-The pipeline could be **stream** or **batch**: this is the first thing you'll need to decide 
+Đường ống của bạn có thể xử lý theo dạng **Xử lý luồng (Stream)** hoặc **Xử lý theo lô (Batch)** — đây là quyết định kiến trúc đầu tiên bạn cần đưa ra:
 
-* **Stream**: If you want to consume data in real-time and put them to data lake
-* **Batch**: If you want to run things periodically (e.g. hourly/daily)
+* **Stream**: Phù hợp nếu bạn muốn tiếp nhận và xử lý sự kiện theo thời gian thực (real-time) rồi đưa vào Data Lake.
+* **Batch**: Phù hợp nếu bạn muốn chạy xử lý định kỳ theo lịch trình (ví dụ: mỗi giờ một lần hoặc hàng ngày).
 
-## Technologies 
+## Công Nghệ Sử Dụng (Technologies)
 
-You don't have to limit yourself to technologies covered in the course. You can use alternatives as well:
+Bạn không bị giới hạn trong các công nghệ đã được dạy trong khóa học. Bạn hoàn toàn có thể lựa chọn các giải pháp thay thế tương đương:
 
-* **Cloud**: AWS, GCP, Azure, ...
-* **Infrastructure as code (IaC)**: Terraform, Pulumi, Cloud Formation, ...
-* **Workflow orchestration**: Airflow, Prefect, Luigi, ...
-* **Data Warehouse**: BigQuery, Snowflake, Redshift, ...
-* **Batch processing**: Spark, Flink, AWS Batch, ...
-* **Stream processing**: Kafka, Pulsar, Kinesis, ...
+* **Nền tảng Cloud**: Google Cloud Platform (GCP), AWS, Azure,...
+* **Hạ tầng dưới dạng mã nguồn (IaC)**: Terraform, Pulumi, CloudFormation,...
+* **Điều phối quy trình (Workflow Orchestration)**: Kestra, Apache Airflow, Prefect, Dagster, Mage,...
+* **Kho dữ liệu (Data Warehouse)**: Google BigQuery, Snowflake, Amazon Redshift, ClickHouse,...
+* **Xử lý theo lô (Batch Processing)**: Apache Spark, DuckDB, dbt, Flink, AWS Batch,...
+* **Xử lý luồng (Stream Processing)**: Apache Kafka, Redpanda, Apache Flink, AWS Kinesis, RabbitMQ,...
 
-If you use a tool that wasn't covered in the course, be sure to explain what that tool does.
+Nếu bạn sử dụng một công cụ chưa được giới thiệu trong khóa học, hãy nhớ giải thích rõ trong README của dự án công cụ đó đảm nhận vai trò gì.
 
-If you're not certain about some tools, ask in Slack.
+---
 
-## Dashboard
+## Bảng Điều Khiển Trực Quan Hóa (Dashboard)
 
-You can use any of the tools shown in the course (Looker Studio or Streamlit) or any other BI tool of your choice to build a dashboard. If you do use another tool, please specify and make sure that the dashboard is somehow accessible to your peers. 
+Bạn có thể sử dụng bất kỳ công cụ BI nào (ví dụ: Looker Studio, Streamlit, Metabase, Tableau, Power BI) để dựng Dashboard. Nếu dùng công cụ local, hãy đảm bảo người chấm (peer reviewers) có thể dễ dàng xem được hình ảnh hoặc truy cập báo cáo.
 
-Your dashboard should contain at least two tiles, we suggest you include:
+Dashboard của bạn cần có tối thiểu 2 biểu đồ phân tích (tiles), gợi ý:
+- 1 biểu đồ thể hiện phân bố của biến phân loại (categorical data).
+- 1 biểu đồ thể hiện xu hướng của số liệu theo chuỗi thời gian (temporal/time-series).
 
-- 1 graph that shows the distribution of some categorical data 
-- 1 graph that shows the distribution of the data across a temporal line
+Đảm bảo các biểu đồ có chú thích, tiêu đề rõ ràng và trực quan dễ hiểu.
 
-Ensure that your graph is easy to understand by adding references and titles.
- 
-Example dashboard: ![image](https://user-images.githubusercontent.com/4315804/159771458-b924d0c1-91d5-4a8a-8c34-f36c25c31a3c.png)
+Ví dụ minh họa Dashboard:  
+![Ví dụ Dashboard](https://user-images.githubusercontent.com/4315804/159771458-b924d0c1-91d5-4a8a-8c34-f36c25c31a3c.png)
 
+---
 
-## Peer reviewing
+## Quy Trình Đánh Giá Chéo (Peer Reviewing)
 
 > [!IMPORTANT]  
-> To evaluate the projects, we'll use peer reviewing. This is a great opportunity for you to learn from each other.
-> * To get points for your project, you need to evaluate 3 projects of your peers
-> * You get 3 extra points for each evaluation
+> Khóa học áp dụng cơ chế đánh giá chéo giữa các học viên (Peer Reviewing). Đây là cơ hội tuyệt vời để bạn học hỏi từ cách tiếp cận và mã nguồn của bạn bè quốc tế.
+> * Để được công nhận điểm đồ án của bản thân, **bạn bắt buộc phải chấm chéo ít nhất 3 dự án** của các học viên khác.
+> * Bạn sẽ nhận thêm 3 điểm thưởng cho mỗi lượt chấm bài hoàn thành.
 
-## Evaluation Criteria
+---
 
-* Problem description
-    * 0 points: Problem is not described
-    * 2 points: Problem is described but shortly or not clearly 
-    * 4 points: Problem is well described and it's clear what the problem the project solves
-* Cloud
-    * 0 points: Cloud is not used, things run only locally
-    * 2 points: The project is developed in the cloud
-    * 4 points: The project is developed in the cloud and IaC tools are used
-* Data ingestion (choose either batch or stream)
-    * Batch / Workflow orchestration
-        * 0 points: No workflow orchestration
-        * 2 points: Partial workflow orchestration: some steps are orchestrated, some run manually
-        * 4 points: End-to-end pipeline: multiple steps in the DAG, uploading data to data lake
-    * Stream
-        * 0 points: No streaming system (like Kafka, Pulsar, etc)
-        * 2 points: A simple pipeline with one consumer and one producer
-        * 4 points: Using consumer/producers and streaming technologies (like Kafka streaming, Spark streaming, Flink, etc)
-* Data warehouse
-    * 0 points: No DWH is used
-    * 2 points: Tables are created in DWH, but not optimized
-    * 4 points: Tables are partitioned and clustered in a way that makes sense for the upstream queries (with explanation)
-* Transformations (dbt, spark, etc)
-    * 0 points: No tranformations
-    * 2 points: Simple SQL transformation (no dbt or similar tools)
-    * 4 points: Tranformations are defined with dbt, Spark or similar technologies
-* Dashboard
-    * 0 points: No dashboard
-    * 2 points: A dashboard with 1 tile
-    * 4 points: A dashboard with 2 tiles
-* Reproducibility
-    * 0 points: No instructions how to run the code at all
-    * 2 points: Some instructions are there, but they are not complete
-    * 4 points: Instructions are clear, it's easy to run the code, and the code works
+## Tiêu Chí Chấm Điểm Chi Tiết (Evaluation Criteria)
 
-
-> [!NOTE]
-> It's highly recommended to create a new repository for your project (not inside an existing repo) with a meaningful title, such as
-> "Quake Analytics Dashboard" or "Bike Data Insights" and include as many details as possible in the README file. ChatGPT can assist you with this. Doing so will not only make it easier to showcase your project for potential job opportunities but also have it featured on the [Projects Gallery App](#projects-gallery).
-> If you leave the README file empty or with minimal details, there may be point deductions as per the [Evaluation Criteria](#evaluation-criteria).
-
-## Going the extra mile (Optional)
+* **Mô tả bài toán (Problem description)**
+    * 0 điểm: Không mô tả bài toán.
+    * 2 điểm: Có mô tả nhưng sơ sài hoặc chưa rõ ràng.
+    * 4 điểm: Bài toán được mô tả rõ ràng, nêu bật giá trị giải pháp và mục tiêu đồ án.
+* **Điện toán đám mây (Cloud)**
+    * 0 điểm: Không dùng Cloud, chỉ chạy hoàn toàn trên máy local cá nhân.
+    * 2 điểm: Dự án được triển khai trên nền tảng Cloud.
+    * 4 điểm: Dự án triển khai trên Cloud và hạ tầng được quản lý hoàn toàn bằng công cụ IaC (như Terraform).
+* **Nạp dữ liệu (Data Ingestion - Chọn Batch hoặc Stream)**
+    * *Nếu chọn Batch / Workflow Orchestration:*
+        * 0 điểm: Không sử dụng công cụ điều phối (chạy thủ công).
+        * 2 điểm: Điều phối một phần: một số bước có điều phối, một số bước vẫn phải chạy tay.
+        * 4 điểm: Pipeline tự động hóa hoàn chỉnh (End-to-end): nhiều bước trong DAG liên kết chặt chẽ, tự động tải dữ liệu lên Data Lake.
+    * *Nếu chọn Stream:*
+        * 0 điểm: Không có hệ thống streaming (như Kafka, Redpanda,...).
+        * 2 điểm: Pipeline streaming đơn giản với 1 consumer và 1 producer.
+        * 4 điểm: Sử dụng consumer/producers kết hợp các công nghệ xử lý luồng nâng cao (Kafka Streaming, Spark Streaming, Flink,...).
+* **Kho dữ liệu (Data Warehouse)**
+    * 0 điểm: Không sử dụng DWH.
+    * 2 điểm: Có tạo bảng trong DWH nhưng chưa được tối ưu hóa.
+    * 4 điểm: Các bảng được Phân vùng (Partitioned) và Gom cụm (Clustered) hợp lý phục vụ các câu truy vấn phân tích thường xuyên (kèm giải thích rõ ràng).
+* **Biến đổi dữ liệu (Transformations - dbt, Spark, v.v.)**
+    * 0 điểm: Không có bước biến đổi dữ liệu.
+    * 2 điểm: Chỉ dùng các câu lệnh SQL đơn giản chạy thủ công (không dùng dbt hay công cụ tương đương).
+    * 4 điểm: Các bước biến đổi được xây dựng bài bản bằng dbt, Spark hoặc công nghệ tương đương (có lineage, modular models).
+* **Bảng điều khiển (Dashboard)**
+    * 0 điểm: Không có dashboard.
+    * 2 điểm: Dashboard có 1 biểu đồ.
+    * 4 điểm: Dashboard hoàn chỉnh với ít nhất 2 biểu đồ phân tích ý nghĩa.
+* **Khả năng tái lập và chạy lại (Reproducibility)**
+    * 0 điểm: Không có hướng dẫn cách chạy mã nguồn.
+    * 2 điểm: Có hướng dẫn nhưng thiếu sót, người chấm khó chạy lại.
+    * 4 điểm: Hướng dẫn chi tiết, rõ ràng từng bước, môi trường dễ khởi tạo và mã nguồn chạy thành công.
 
 > [!NOTE]
-> The following things are not covered in the course, are entirely optional and they will not be graded.
+> Bạn nên tạo một **repository riêng biệt trên GitHub** cho đồ án (không làm chung bên trong repo này) với tên dự án ấn tượng (ví dụ: `crypto-market-analytics`, `flight-delay-intelligence`), kèm theo file `README.md` được trau chuốt tỉ mỉ. Điều này giúp nâng cao điểm số và là sản phẩm xuất sắc để đưa vào CV ứng tuyển việc làm!
 
-However, implementing these could significantly enhance the quality of your project:
+---
 
-* Add tests
-* Use make
-* Add CI/CD pipeline
+## Nâng Cấp Chất Lượng Đồ Án (Tùy Chọn - Không Chấm Điểm)
 
-If you intend to include this project in your portfolio, adding these additional features will definitely help you to stand out from others.
+Những tiêu chí sau không bắt buộc nhưng sẽ giúp dự án của bạn nổi bật vượt trội trong mắt nhà tuyển dụng:
+* Thêm bộ kiểm thử tự động (Unit tests, Data tests).
+* Sử dụng `Makefile` để chuẩn hóa các thao tác thực thi lệnh.
+* Thiết lập luồng tự động hóa CI/CD (GitHub Actions) để kiểm tra code và chạy kiểm thử mỗi lần commit.
 
-## Suggestions from peer reviewers
+---
 
-These tips come from peers who reviewed multiple projects and noticed recurring issues. Following them will help you avoid common pitfalls and make your project easier to evaluate.
+## Lời Khuyên Từ Các Học Viên Đánh Giá Chéo (Peer Reviewer Tips)
 
-From Pável Kalmykov Razgovórov:
+* **Kiểm tra repo từ một bản clone mới tinh**: Nhiều bạn quên không commit các file quan trọng (`requirements.txt`, thư mục cấu hình, thư mục docker volume trỏ sai đường dẫn). Nếu file không có trên GitHub, người chấm sẽ không thể chạy được!
+* **Tuyệt đối không hardcode đường dẫn cục bộ hoặc GCP Project ID cá nhân**: Hãy sử dụng biến môi trường (environment variables / `.env`) và hướng dẫn trong README.
+* **Xử lý ngoại lệ khi gọi API bên ngoài**: Nếu script lấy dữ liệu từ link bên ngoài, cần bắt lỗi trong trường hợp server trả về lỗi 404 hoặc 500.
+* **Chạy thử `docker compose up` trước khi nộp bài**: Đảm bảo không bị lỗi cú pháp YAML hoặc xung đột port.
+* **Giữ tài liệu README ăn khớp với mã nguồn thực tế**: Kiểm tra các port, lệnh chạy và đường dẫn trong README xem có khớp với phiên bản code mới nhất không.
+* **Dự án dbt cần chạy lệnh cài đặt gói phụ thuộc**: Nếu dùng `dbt_utils`, hãy ghi nhớ chạy `dbt deps`.
 
-* Test your repo from a clean clone before submitting. Two of the three referenced files or directories that were never committed (config folders, requirements.txt in the wrong path, volumes pointing to nonexistent dirs). If it's not in the repo, the reviewer can't use it.
-* Don't hardcode local paths or personal cloud project IDs. Use environment variables instead.
-* Handle external API failures. If your script fetches data from a URL, make sure it handles cases where the URL returns a 404 or 500 gracefully.
-* Run `docker compose up` at least once before submitting. One project had a SyntaxError in a config file that prevented any container from starting.
-* Keep your README consistent with the code. Watch out for docker-compose files pointing to old services, .env.example with wrong ports, or instructions referencing directories that don't exist.
-* If your dbt project uses external packages, make sure `dbt deps` runs somewhere. Two projects needed dbt_utils but never installed it.
+---
 
-## Cheating and plagiarism
+## Quy Định Về Chống Gian Lận Và Sao Chép (Anti-Plagiarism)
 
-Plagiarism in any form is not allowed. Examples of plagiarism:
+Mọi hành vi sao chép (đạo nhái) đều bị nghiêm cấm. Đồ án sẽ nhận **0 điểm** nếu:
+* Sử dụng lại notebook hoặc đồ án của người khác (toàn bộ hoặc một phần).
+* Sử dụng lại đồ án của chính bạn từ các khóa học / bootcamp khác.
+* Sử dụng lại đồ án giữa kỳ hoặc đồ án từ các khóa ML Zoomcamp trước đây.
 
-* Taking somebody's else notebooks and projects (in full or partly) and using it for the capstone project
-* Re-using your own projects (in full or partly) from other courses and bootcamps
-* Re-using your midterm project from ML Zoomcamp in capstone
-* Re-using your ML Zoomcamp from previous iterations of the course
+---
 
-Violating any of this will result in 0 points for this project.
+## Tài Nguyên & Thư Viện Đồ Án Tiêu Biểu (Projects Gallery)
 
-## Resources
+Khám phá hàng trăm đồ án tốt nghiệp xuất sắc từ các cựu học viên để lấy cảm hứng và học hỏi cấu trúc dự án:
 
-### Datasets
+[![Thư Viện Đồ Án Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://datatalksclub-projects.streamlit.app/)
 
-Refer to the provided [datasets](datasets.md) for possible selection.
-
-### Helpful Links
-
-* [Unit Tests + CI for Airflow](https://www.astronomer.io/events/recaps/testing-airflow-to-bulletproof-your-code/)
-* [CI/CD for Airflow (with Gitlab & GCP state file)](https://engineering.ripple.com/building-ci-cd-with-airflow-gitlab-and-terraform-in-gcp)
-* [CI/CD for Airflow (with GitHub and S3 state file)](https://programmaticponderings.com/2021/12/14/devops-for-dataops-building-a-ci-cd-pipeline-for-apache-airflow-dags/)
-* [CD for Terraform](https://medium.com/towards-data-science/git-actions-terraform-for-data-engineers-scientists-gcp-aws-azure-448dc7c60fcc)
-* [Spark + Airflow](https://medium.com/doubtnut/github-actions-airflow-for-automating-your-spark-pipeline-c9dff32686b)
-* [dbt and Airflow Spiritual Alignment](https://docs.getdbt.com/blog/dbt-airflow-spiritual-alignment) — orchestrating dbt with Airflow; the trial dbt account exposes a dbt API, so an Airflow Python operator can trigger the job ([example code](https://github.com/sungchun12/airflow-toolkit/blob/95d40ac76122de337e1b1cdc8eed35ba1c3051ed/dags/examples/dbt_cloud_example.py)) — don't commit the API key or job ID
-* [Airflow DataProc operators](https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/dataproc/index.html) — give the service account the DataProc Administrator and Service Account User roles ([why](https://stackoverflow.com/questions/63941429/user-not-authorized-to-act-as-service-account-when-using-workload-identity)), and when using `DataprocSubmitPySparkJobOperator` add the BigQuery connector jar (`gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.24.0.jar`), since DataProc doesn't include it by default
-
-
-### Projects Gallery
-
-Explore a collection of projects completed by members of our community. The projects cover a wide range of topics and utilize different tools and techniques. Feel free to delve into any project and see how others have tackled real-world problems with data, structured their code, and presented their findings. It's a great resource to learn and get ideas for your own projects.
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://datatalksclub-projects.streamlit.app/)
-
-### DE Zoomcamp 2023
-
-* [2023 Projects](../cohorts/2023/project.md)
-
-### DE Zoomcamp 2022
-
-* [2022 Projects](../cohorts/2022/project.md)
+* [Đồ án tiêu biểu khóa 2023](../cohorts/2023/project.md)
+* [Đồ án tiêu biểu khóa 2022](../cohorts/2022/project.md)

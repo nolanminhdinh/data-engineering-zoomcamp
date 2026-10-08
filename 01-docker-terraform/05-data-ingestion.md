@@ -2,70 +2,66 @@
 prev_url: 04-postgres-docker.md
 next_url: 06-ingestion-script.md
 ---
-# NY Taxi Dataset and Data Ingestion
+# Bộ Dữ Liệu NY Taxi Và Quy Trình Nạp Dữ Liệu (NY Taxi Dataset & Data Ingestion)
 
-We will now create a Jupyter Notebook `notebook.ipynb` file which we will use to read a CSV file and export it to Postgres.
+Trong bài học này, chúng ta sẽ sử dụng Jupyter Notebook để khám phá bộ dữ liệu chuyến đi taxi thành phố New York (NYC Taxi), đọc tệp dữ liệu dạng nén `.csv.gz`, chuẩn hóa kiểu dữ liệu, và thực hiện nạp dữ liệu (data ingestion) vào cơ sở dữ liệu PostgreSQL theo từng khối (chunks) để tránh tràn bộ nhớ RAM.
 
+---
 
-## Setting up Jupyter
+## 1. Thiết Lập Môi Trường Jupyter Notebook
 
-Install Jupyter:
+Cài đặt Jupyter vào dự án bằng công cụ `uv`:
 
 ```bash
 uv add --dev jupyter
 ```
 
-Let's create a Jupyter notebook to explore the data:
+Khởi động Jupyter Notebook:
 
 ```bash
 uv run jupyter notebook
 ```
 
-## The NYC Taxi Dataset
+Trình duyệt sẽ tự động mở giao diện làm việc của Jupyter. Hãy tạo một notebook mới mang tên `notebook.ipynb`.
 
-We will use data from the [NYC TLC Trip Record Data website](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page).
+---
 
-Specifically, we will use the [Yellow taxi trip records CSV file for January 2021](https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz).
+## 2. Tìm Hiểu Về Bộ Dữ Liệu NYC Taxi
 
-This data used to be csv, but later they switched to parquet. We want to keep using CSV because we need to do a bit of extra pre-processing (for the purposes of learning it).
+Chúng ta sử dụng dữ liệu thực tế từ [Website Dữ liệu Chuyến đi của NYC TLC](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page).
 
-A dictionary to understand each field is available [here](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
+Cụ thể, chúng ta sử dụng tệp: [Yellow taxi trip records CSV tháng 01/2021](https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz).
 
-> Note: The CSV data is stored as gzipped files. Pandas can read them directly.
+> [!NOTE]
+> Mặc dù dữ liệu thực tế ngày nay thường được lưu ở định dạng Parquet, trong bài thực hành này chúng ta sử dụng định dạng CSV để rèn luyện kỹ năng tiền xử lý, kiểm soát kiểu dữ liệu và chia khối (chunking) trong đường ống nạp dữ liệu.  
+> Bạn có thể tra cứu ý nghĩa từng cột trong [Từ điển dữ liệu NYC Taxi (Data Dictionary)](https://www1.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_yellow.pdf).
 
-## Explore the Data
+---
 
-Create a new notebook and run:
+## 3. Khám Phá Dữ Liệu Ban Đầu (Data Exploration)
+
+Trong notebook, hãy chạy đoạn mã sau để đọc 100 dòng đầu tiên:
 
 ```python
 import pandas as pd
 
-# Read a sample of the data
+# Đường dẫn tải dữ liệu
 prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
 df = pd.read_csv(prefix + 'yellow_tripdata_2021-01.csv.gz', nrows=100)
 
-# Display first rows
+# Hiển thị các dòng đầu
 df.head()
 
-# Check data types
+# Kiểm tra kiểu dữ liệu các cột
 df.dtypes
 
-# Check data shape
+# Kiểm tra kích thước DataFrame
 df.shape
 ```
-### Note
-- When using `nrows=100` to sample the first 100 rows, all columns have consistent data types in this subset, so **the `DtypeWarning` below will NOT appear**.
-- To reproduce the type warning shown below, remove the `nrows=100` parameter and read the full dataset.
 
-### Handling Data Types
+### Xử Lý Kiểu Dữ Liệu (Data Types)
 
-We have a warning: (Note that this warning might pop up later for some users, so it's best to follow the instructions below)
-
-```
-/tmp/ipykernel_25483/2933316018.py:1: DtypeWarning: Columns (6) have mixed types. Specify dtype option on import or set low_memory=False.
-```
-
-So we need to specify the types:
+Khi đọc toàn bộ tệp CSV lớn, Pandas có thể đưa ra cảnh báo kiểu dữ liệu không đồng nhất (`DtypeWarning: Columns (6) have mixed types`). Để đảm bảo tính toàn vẹn của dữ liệu và tối ưu bộ nhớ, chúng ta cần chủ động định nghĩa trước từ điển kiểu dữ liệu (`dtype`) và danh sách cột thời gian (`parse_dates`):
 
 ```python
 dtype = {
@@ -100,35 +96,40 @@ df = pd.read_csv(
 )
 ```
 
-## Ingesting Data into Postgres
+---
 
-In the Jupyter notebook, we create code to:
+## 4. Nạp Dữ Liệu Vào PostgreSQL (Ingesting to Postgres)
 
-1. Download the CSV file
-2. Read it in chunks with pandas
-3. Convert datetime columns
-4. Insert data into PostgreSQL using SQLAlchemy
+Quy trình nạp dữ liệu gồm 4 bước chính:
+1. Tải và đọc tệp CSV theo từng khối (chunks).
+2. Chuyển đổi định dạng các cột ngày giờ.
+3. Tạo kết nối tới cơ sở dữ liệu PostgreSQL qua thư viện SQLAlchemy.
+4. Ghi dữ liệu vào bảng trong cơ sở dữ liệu.
 
-### Install SQLAlchemy
+### Cài Đặt Thư Viện Kết Nối SQLAlchemy và Driver
 
 ```bash
 uv add sqlalchemy "psycopg[binary,pool]"
 ```
 
-### Create Database Connection
+### Khởi Tạo Kết Nối Cơ Sở Dữ Liệu (Engine)
 
 ```python
 from sqlalchemy import create_engine
+
+# Chuỗi kết nối dạng: postgresql+driver://user:password@host:port/database
 engine = create_engine('postgresql+psycopg://root:root@localhost:5432/ny_taxi')
 ```
 
-### Get DDL Schema
+### Xem Cú Pháp DDL Tự Động Của Bảng (Schema DDL)
+
+Pandas hỗ trợ sinh câu lệnh SQL DDL tự động tương ứng với DataFrame:
 
 ```python
 print(pd.io.sql.get_schema(df, name='yellow_taxi_data', con=engine))
 ```
 
-Output:
+Kết quả sinh ra cấu trúc bảng:
 
 ```sql
 CREATE TABLE yellow_taxi_data (
@@ -153,17 +154,19 @@ CREATE TABLE yellow_taxi_data (
 )
 ```
 
-### Create the Table
+### Tạo Bảng Rỗng Ban Đầu
+
+Dùng cú pháp `df.head(n=0)` để chỉ tạo cấu trúc bảng (schema) mà không chèn dữ liệu:
 
 ```python
 df.head(n=0).to_sql(name='yellow_taxi_data', con=engine, if_exists='replace')
 ```
 
-`head(n=0)` makes sure we only create the table, we don't add any data yet.
+---
 
-## Ingesting Data in Chunks
+## 5. Nạp Dữ Liệu Theo Từng Khối (Chunking Ingestion)
 
-We don't want to insert all the data at once. Let's do it in batches and use an iterator for that:
+Trong thực tế, các tệp dữ liệu có thể nặng hàng chục Gigabyte, việc đọc một lần toàn bộ tệp vào RAM sẽ dẫn đến lỗi tràn bộ nhớ (Out-of-Memory - OOM). Do đó, kỹ thuật chuẩn trong Data Engineering là sử dụng một **trình lặp (Iterator)** với tham số `chunksize`:
 
 ```python
 df_iter = pd.read_csv(
@@ -171,105 +174,71 @@ df_iter = pd.read_csv(
     dtype=dtype,
     parse_dates=parse_dates,
     iterator=True,
-    chunksize=100000
+    chunksize=100000  # Mỗi lần đọc 100,000 dòng
 )
 ```
 
-### Iterate Over Chunks
+### Vòng Lặp Nạp Toàn Diện (Complete Ingestion Loop)
 
-```python
-for df_chunk in df_iter:
-    print(len(df_chunk))
-```
-
-### Inserting Data
-
-```python
-df_chunk.to_sql(name='yellow_taxi_data', con=engine, if_exists='append')
-```
-
-### Complete Ingestion Loop
+Đoạn mã sau đọc khối đầu tiên để tạo bảng mới (nếu chưa có), sau đó liên tục ghi thêm (`if_exists='append'`) từng khối vào bảng:
 
 ```python
 first = True
 
 for df_chunk in df_iter:
-
     if first:
-        # Create table schema (no data)
+        # Tạo bảng mới rỗng (ghi đè nếu đã tồn tại)
         df_chunk.head(0).to_sql(
             name="yellow_taxi_data",
             con=engine,
             if_exists="replace"
         )
         first = False
-        print("Table created")
+        print("Đã tạo bảng yellow_taxi_data thành công.")
 
-    # Insert chunk
+    # Ghi thêm từng khối vào cơ sở dữ liệu
     df_chunk.to_sql(
         name="yellow_taxi_data",
         con=engine,
         if_exists="append"
     )
 
-    print("Inserted:", len(df_chunk))
+    print(f"Đã nạp thành công: {len(df_chunk)} dòng.")
 ```
 
-### Alternative Approach (Without First Flag)
+### Bổ Sung Thanh Tiến Trình (Progress Bar với `tqdm`)
 
-```python
-first_chunk = next(df_iter)
-
-first_chunk.head(0).to_sql(
-    name="yellow_taxi_data",
-    con=engine,
-    if_exists="replace"
-)
-
-print("Table created")
-
-first_chunk.to_sql(
-    name="yellow_taxi_data",
-    con=engine,
-    if_exists="append"
-)
-
-print("Inserted first chunk:", len(first_chunk))
-
-for df_chunk in df_iter:
-    df_chunk.to_sql(
-        name="yellow_taxi_data",
-        con=engine,
-        if_exists="append"
-    )
-    print("Inserted chunk:", len(df_chunk))
-```
-
-## Adding Progress Bar
-
-Add `tqdm` to see progress:
+Để theo dõi trực quan tiến độ nạp dữ liệu:
 
 ```bash
 uv add tqdm
 ```
 
-Put it around the iterable:
+Áp dụng trong code:
 
 ```python
 from tqdm.auto import tqdm
 
 for df_chunk in tqdm(df_iter):
-    ...
+    df_chunk.to_sql(
+        name="yellow_taxi_data",
+        con=engine,
+        if_exists="append"
+    )
 ```
-To see progress in terms of total chunks, you would have to add the `total` argument to `tqdm(df_iter)`. In our scenario, the pragmatic way is
-to hardcode a value based on the number of entries in the table.
 
-## Verify the Data
+---
 
-Connect to it using pgcli:
+## 6. Kiểm Tra Dữ Liệu Đã Nạp
+
+Mở một cửa sổ dòng lệnh và kết nối vào PostgreSQL bằng `pgcli`:
 
 ```bash
 uv run pgcli -h localhost -p 5432 -u root -d ny_taxi
 ```
 
-And explore the data.
+Chạy câu lệnh kiểm tra số lượng bản ghi đã được nạp:
+
+```sql
+SELECT count(1) FROM yellow_taxi_data;
+```

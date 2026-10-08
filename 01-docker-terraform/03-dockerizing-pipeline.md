@@ -2,83 +2,88 @@
 prev_url: 02-virtual-environment.md
 next_url: 04-postgres-docker.md
 ---
-# Dockerizing the Pipeline
+# Đóng Gói Đường Ống Vào Docker (Dockerizing the Pipeline)
 
-Now let's containerize the script. Create the following `Dockerfile` file:
+Bây giờ chúng ta sẽ đóng gói (containerize) script Python vừa viết vào bên trong một Docker Image để có thể triển khai ở bất kỳ môi trường nào. Hãy tạo tệp `Dockerfile` với nội dung dưới đây:
 
+---
 
-## Simple Dockerfile with pip
+## 1. Viết Dockerfile Đơn Giản Với `pip`
 
 ```dockerfile
-# base Docker image that we will build on
+# Base image nền tảng chứa Python
 FROM python:3.13.11-slim
 
-# set up our image by installing prerequisites; pandas in this case
+# Cài đặt các thư viện phụ thuộc: pandas và pyarrow
 RUN pip install pandas pyarrow
 
-# set up the working directory inside the container
+# Thiết lập thư mục làm việc bên trong container
 WORKDIR /app
-# copy the script to the container. 1st name is source file, 2nd is destination
+
+# Sao chép script từ máy thật vào thư mục /app trong container
 COPY pipeline.py pipeline.py
 
-# define what to do first when the container runs
-# in this example, we will just run the script
+# Khai báo lệnh mặc định sẽ chạy ngay khi container khởi động
 ENTRYPOINT ["python", "pipeline.py"]
 ```
 
-**Explanation:**
+### Giải Thích Các Chỉ Lệnh Cốt Lõi:
 
-- `FROM`: Base image (Python 3.13)
-- `RUN`: Execute commands during build
-- `WORKDIR`: Set working directory
-- `COPY`: Copy files into the image
-- `ENTRYPOINT`: Default command to run
+- `FROM`: Image nền tảng ban đầu (ở đây dùng Python 3.13 bản rút gọn `-slim` để giảm dung lượng image).
+- `RUN`: Thực thi các lệnh cài đặt trong quá trình xây dựng image (build time).
+- `WORKDIR`: Thiết lập thư mục làm việc mặc định bên trong container.
+- `COPY`: Sao chép tệp từ máy thật (host) vào trong container. Tên đầu là nguồn, tên sau là đích.
+- `ENTRYPOINT`: Lệnh mặc định sẽ được thực thi khi container được chạy.
 
-### Build and Run
+### Xây Dựng Và Chạy Container (Build and Run)
 
-Let's build the image:
+Tiến hành build Docker image từ thư mục hiện tại:
 
 ```bash
 docker build -t test:pandas .
 ```
 
-* The image name will be `test` and its tag will be `pandas`. If the tag isn't specified it will default to `latest`.
+* Image mới tạo sẽ có tên là `test` với tag là `pandas` (`test:pandas`). Nếu không chỉ định tag, Docker mặc định gán là `latest`. Dấu chấm `.` ở cuối đại diện cho đường dẫn build context hiện tại.
 
-We can now run the container and pass an argument to it, so that our pipeline will receive it:
+Khởi chạy container và truyền tham số ngày vào đường ống:
 
 ```bash
-docker run -it test:pandas some_number
+docker run -it test:pandas 10
 ```
 
-You should get the same output you did when you ran the pipeline script by itself.
+Bạn sẽ nhận được kết quả in ra tương tự như khi bạn chạy script trên máy thật, nhưng lần này toàn bộ code và thư viện đều nằm trọn vẹn trong một container hoàn toàn cô lập!
 
-> Note: these instructions assume that `pipeline.py` and `Dockerfile` are in the same directory. The Docker commands should also be run from the same directory as these files.
+> [!NOTE]
+> Các hướng dẫn này yêu cầu tệp `pipeline.py` và `Dockerfile` nằm cùng một thư mục và lệnh `docker` được chạy từ chính thư mục đó.
 
-## Dockerfile with uv
+---
 
-What about uv? Let's use it instead of using pip:
+## 2. Viết Dockerfile Hiện Đại Tối Ưu Với `uv`
+
+Trong các hệ thống thực tế chuẩn công nghiệp, chúng ta nên sử dụng cơ chế multi-stage build kết hợp file khóa phiên bản `uv.lock` để đảm bảo tính tái lập 100% và tăng tốc bộ nhớ đệm (caching layers):
 
 ```dockerfile
-# Start with slim Python 3.13 image
+# Sử dụng base image Python 3.13 slim nhẹ nhất
 FROM python:3.13.10-slim
 
-# Copy uv binary from official uv image (multi-stage build pattern)
+# Sao chép trực tiếp file thực thi uv từ image chính thức của Astral (multi-stage pattern)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
 
-# Set working directory
+# Thiết lập thư mục làm việc
 WORKDIR /app
 
-# Add virtual environment to PATH so we can use installed packages
+# Thêm đường dẫn môi trường ảo vào biến PATH để sử dụng trực tiếp các gói đã cài
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy dependency files first (better layer caching)
+# Sao chép các tệp quản lý phụ thuộc trước (tối ưu cơ chế cache layer của Docker)
 COPY "pyproject.toml" "uv.lock" ".python-version" ./
-# Install dependencies from lock file (ensures reproducible builds)
+
+# Đồng bộ chính xác các phụ thuộc dựa trên file lock (đảm bảo môi trường nhất quán tuyệt đối)
 RUN uv sync --locked
 
-# Copy application code
+# Sao chép mã nguồn ứng dụng
 COPY pipeline.py pipeline.py
 
-# Set entry point
+# Điểm vào thực thi
 ENTRYPOINT ["uv", "run", "python", "pipeline.py"]
 ```

@@ -3,21 +3,20 @@ video_url: https://www.youtube.com/watch?v=QEcps_iskgg
 prev_url: 09-docker-compose.md
 next_url: 11-cleanup.md
 ---
-# SQL Refresher
+# Ôn Tập Kiến Thức SQL Thực Chiến (SQL Refresher)
 
-Pre-Requisites: If you followed the course in the given order, Docker Compose should already be running with pgdatabase and pgAdmin.
+**Điều kiện tiên quyết**: Đảm bảo Docker Compose đang khởi chạy các container `pgdatabase` và `pgadmin`.
 
-Once done, you can go to http://localhost:8085/browser/ to access pgAdmin.
-Don't forget to Right Click on the server or database to refresh it in case you don't see the new table.
+Truy cập giao diện pgAdmin tại `http://localhost:8085` trên trình duyệt. (Nếu chưa thấy bảng mới tạo, nhấp chuột phải vào database hoặc mục Tables và chọn **Refresh**).
 
-Now start querying!
+Bây giờ chúng ta bắt đầu viết các câu lệnh SQL thực tế trên bộ dữ liệu Yellow Taxi!
 
+---
 
-## Inner Joins
+## 1. Phép Kết Nối Trong (INNER JOIN)
 
-### Implicit INNER JOIN
-
-Joining Yellow Taxi table with Zones Lookup table (implicit INNER JOIN):
+### Cú pháp INNER JOIN ẩn (Implicit INNER JOIN)
+Kết nối bảng dữ liệu chuyến đi `yellow_taxi_trips` với bảng danh mục địa điểm `zones` cho điểm đón (pickup) và điểm trả (dropoff):
 
 ```sql
 SELECT
@@ -36,7 +35,7 @@ WHERE
 LIMIT 100;
 ```
 
-### Explicit INNER JOIN
+### Cú pháp INNER JOIN tường minh (Explicit INNER JOIN)
 
 ```sql
 SELECT
@@ -48,16 +47,17 @@ SELECT
 FROM
     yellow_taxi_trips t
 JOIN
--- or INNER JOIN but it's less used, when writing JOIN, postgreSQL understands implicitly that we want to use an INNER JOIN
     zones zpu ON t."PULocationID" = zpu."LocationID"
 JOIN
     zones zdo ON t."DOLocationID" = zdo."LocationID"
 LIMIT 100;
 ```
 
-## Data Quality Checks
+---
 
-### Checking for NULL Location IDs
+## 2. Kiểm Tra Chất Lượng Dữ Liệu (Data Quality Checks)
+
+### Kiểm tra các bản ghi có ID địa điểm bị NULL
 
 ```sql
 SELECT
@@ -74,7 +74,7 @@ WHERE
 LIMIT 100;
 ```
 
-### Checking for Location IDs NOT IN Zones Table
+### Kiểm tra các ID địa điểm không tồn tại trong bảng danh mục `zones`
 
 ```sql
 SELECT
@@ -91,13 +91,19 @@ WHERE
 LIMIT 100;
 ```
 
-## LEFT, RIGHT, and OUTER JOINS
+---
 
-Using LEFT, RIGHT, and OUTER JOINS when some Location IDs are not in either Tables:
+## 3. Các Phép Kết Nối Ngoài: LEFT JOIN, RIGHT JOIN, FULL OUTER JOIN
+
+Để minh họa tình huống một số địa điểm bị khuyết thiếu trong danh mục, ta thử xóa một ID:
 
 ```sql
 DELETE FROM zones WHERE "LocationID" = 142;
+```
 
+### LEFT JOIN (Giữ lại toàn bộ chuyến đi kể cả khi không tìm thấy địa điểm đón):
+
+```sql
 SELECT
     tpep_pickup_datetime,
     tpep_dropoff_datetime,
@@ -113,61 +119,16 @@ JOIN
 LIMIT 100;
 ```
 
-```sql
-SELECT
-    tpep_pickup_datetime,
-    tpep_dropoff_datetime,
-    total_amount,
-    CONCAT(zpu."Borough", ' | ', zpu."Zone") AS "pickup_loc",
-    CONCAT(zdo."Borough", ' | ', zdo."Zone") AS "dropoff_loc"
-FROM
-    yellow_taxi_trips t
-RIGHT JOIN
-    zones zpu ON t."PULocationID" = zpu."LocationID"
-JOIN
-    zones zdo ON t."DOLocationID" = zdo."LocationID"
-LIMIT 100;
-```
+---
 
-```sql
-SELECT
-    tpep_pickup_datetime,
-    tpep_dropoff_datetime,
-    total_amount,
-    CONCAT(zpu."Borough", ' | ', zpu."Zone") AS "pickup_loc",
-    CONCAT(zdo."Borough", ' | ', zdo."Zone") AS "dropoff_loc"
-FROM
-    yellow_taxi_trips t
-OUTER JOIN
-    zones zpu ON t."PULocationID" = zpu."LocationID"
-JOIN
-    zones zdo ON t."DOLocationID" = zdo."LocationID"
-LIMIT 100;
-```
+## 4. Gom Nhóm Dữ Liệu (GROUP BY) Và Sắp Xếp (ORDER BY)
 
-## GROUP BY
-
-### Calculate Number of Trips Per Day
+### Tính tổng số chuyến đi theo từng ngày:
 
 ```sql
 SELECT
     CAST(tpep_dropoff_datetime AS DATE) AS "day",
-    COUNT(1)
-FROM
-    yellow_taxi_trips
-GROUP BY
-    CAST(tpep_dropoff_datetime AS DATE)
-LIMIT 100;
-```
-
-## ORDER BY
-
-### Ordering by Day
-
-```sql
-SELECT
-    CAST(tpep_dropoff_datetime AS DATE) AS "day",
-    COUNT(1)
+    COUNT(1) AS "total_trips"
 FROM
     yellow_taxi_trips
 GROUP BY
@@ -177,7 +138,7 @@ ORDER BY
 LIMIT 100;
 ```
 
-### Ordering by Count
+### Tìm những ngày có số lượng chuyến đi cao nhất:
 
 ```sql
 SELECT
@@ -192,14 +153,14 @@ ORDER BY
 LIMIT 100;
 ```
 
-## Other Aggregations
+### Kết hợp nhiều hàm tổng hợp (Aggregations: COUNT, MAX, AVG):
 
 ```sql
 SELECT
     CAST(tpep_dropoff_datetime AS DATE) AS "day",
     COUNT(1) AS "count",
-    MAX(total_amount) AS "total_amount",
-    MAX(passenger_count) AS "passenger_count"
+    MAX(total_amount) AS "max_total_amount",
+    MAX(passenger_count) AS "max_passengers"
 FROM
     yellow_taxi_trips
 GROUP BY
@@ -209,15 +170,15 @@ ORDER BY
 LIMIT 100;
 ```
 
-## Grouping by Multiple Fields
+### Gom nhóm theo nhiều trường (Grouping by Multiple Fields):
 
 ```sql
 SELECT
     CAST(tpep_dropoff_datetime AS DATE) AS "day",
     "DOLocationID",
     COUNT(1) AS "count",
-    MAX(total_amount) AS "total_amount",
-    MAX(passenger_count) AS "passenger_count"
+    MAX(total_amount) AS "max_total_amount",
+    MAX(passenger_count) AS "max_passengers"
 FROM
     yellow_taxi_trips
 GROUP BY

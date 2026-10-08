@@ -1,111 +1,121 @@
 ---
 next_url: 02-virtual-environment.md
 ---
-# Introduction to Docker
+# Giới Thiệu Về Docker (Introduction to Docker)
 
-Docker is a _containerization software_ that allows us to isolate software in a similar way to virtual machines but in a much leaner way.
+Docker là một phần mềm **đóng gói ứng dụng (containerization software)** cho phép chúng ta cô lập phần mềm tương tự như các máy ảo (virtual machines), nhưng nhẹ hơn và tiết kiệm tài nguyên hơn rất nhiều.
 
-A Docker image is a _snapshot_ of a container that we can define to run our software, or in this case our data pipelines. By exporting our Docker images to Cloud providers such as Amazon Web Services or Google Cloud Platform we can run our containers there.
+Một **Docker image** là một bản chụp (snapshot/blueprint) của container mà chúng ta định nghĩa để chạy ứng dụng của mình — trong trường hợp của khóa học này là các đường ống dữ liệu (data pipelines). Bằng cách đẩy các Docker images lên các nhà cung cấp đám mây như Amazon Web Services (AWS) hoặc Google Cloud Platform (GCP), chúng ta có thể khởi chạy và vận hành container ở bất cứ đâu.
 
+---
 
-## Why Docker?
+## Tại Sao Nên Dùng Docker? (Why Docker?)
 
-Docker provides the following advantages:
+Docker đem lại 3 ưu thế vượt trội:
 
-- Reproducibility: Same environment everywhere
-- Isolation: Applications run independently
-- Portability: Run anywhere Docker is installed
+- **Tính tái lập (Reproducibility)**: Cùng một môi trường thực thi nhất quán ở mọi nơi (máy cá nhân, máy đồng nghiệp, máy chủ test, hay môi trường production).
+- **Tính cô lập (Isolation)**: Các ứng dụng chạy độc lập, không xung đột thư viện hay phiên bản phần mềm với nhau.
+- **Tính di động (Portability)**: Chạy được trên bất kỳ hệ điều hành nào đã cài đặt Docker (Linux, Windows, macOS).
 
-They are used in many situations:
+Docker được ứng dụng rộng rãi trong rất nhiều tình huống thực tế:
 
-- Integration tests: CI/CD pipelines
-- Running pipelines on the cloud: AWS Batch, Kubernetes jobs
-- Spark: Analytics engine for large-scale data processing
-- Serverless: AWS Lambda, Google Functions
+- Kiểm thử tích hợp (Integration tests) trong đường ống CI/CD.
+- Chạy các pipeline trên Cloud: AWS Batch, Kubernetes jobs.
+- Apache Spark: Động cơ phân tích dữ liệu quy mô lớn.
+- Kiến trúc Serverless: AWS Lambda, Google Cloud Functions.
 
-## Basic Docker Commands
+---
 
-Check Docker version:
+## Các Lệnh Docker Cơ Bản (Basic Docker Commands)
+
+Kiểm tra phiên bản Docker đã cài đặt:
 
 ```bash
 docker --version
 ```
 
-Run a simple container:
+Khởi chạy một container đơn giản để kiểm tra cài đặt:
 
 ```bash
 docker run hello-world
 ```
 
-Run something more complex:
+Khởi chạy một hệ điều hành hoàn chỉnh trong container (ví dụ Ubuntu):
 
 ```bash
 docker run ubuntu
 ```
 
-Nothing happens. Need to run it in `-it` mode:
+Bạn sẽ thấy container thoát ngay lập tức vì không có tiến trình nào chạy ngầm. Để tương tác trực tiếp với container qua dòng lệnh, ta cần thêm cờ `-it` (interactive & tty):
 
 ```bash
 docker run -it ubuntu
 ```
 
-We don't have `python` there so let's install it:
+Lúc này bạn đã ở bên trong container Ubuntu. Mặc định Ubuntu chưa có sẵn `python`, hãy cài đặt thử:
 
 ```bash
 apt update && apt install python3
 python3 -V
 ```
 
-## Stateless Containers
+---
 
-Important: Docker containers are stateless - any changes done inside a container will NOT be saved when the container is killed and started again.
+## Tính Phi Trạng Thái Của Container (Stateless Containers)
 
-When you exit the container and use it again, the changes are gone:
+> [!IMPORTANT]
+> **Điểm cốt lõi:** Các Docker container mang tính **phi trạng thái (stateless)** — mọi thay đổi bạn thực hiện bên trong container sẽ **KHÔNG** được lưu lại khi container bị tắt và khởi động lại mới.
+
+Khi bạn gõ `exit` để thoát container và chạy lại lệnh sau, Python bạn vừa cài đặt sẽ biến mất:
 
 ```bash
 docker run -it ubuntu
 python3 -V
 ```
 
-This is good, because it doesn't affect your host system. Let's say you do something crazy like this:
+Đặc tính này rất an toàn vì nó hoàn toàn cô lập với hệ điều hành máy thật (host system) của bạn. Giả sử bạn lỡ gõ một lệnh phá hủy:
 
 ```bash
 docker run -it ubuntu
-rm -rf / # don't run it on your computer!
+rm -rf / # Tuyệt đối KHÔNG chạy lệnh này trên máy thật của bạn!
 ```
 
-Next time we run it, all the files are back.
+Thì ở lần khởi chạy tiếp theo, toàn bộ tệp tin của image Ubuntu vẫn nguyên vẹn như ban đầu.
 
-## Managing Containers
+---
 
-But, this is not _completely_ correct. The state is saved somewhere. We can see stopped containers:
+## Quản Lý Containers (Managing Containers)
+
+Mặc dù container thoát ra không lưu trạng thái vào image, nhưng thực thể container đã dừng vẫn tồn tại trên ổ cứng. Ta có thể liệt kê tất cả container (kể cả đã tắt):
 
 ```bash
 docker ps -a
 ```
 
-We can restart one of them, but we won't do it, because it's not a good practice. They take space, so let's delete them:
+Các container đã tắt sẽ chiếm dụng dung lượng ổ cứng. Bạn có thể xóa toàn bộ các container đã dừng bằng lệnh:
 
 ```bash
 docker rm $(docker ps -aq)
 ```
 
-Next time we run something, we add `--rm`:
+Để tự động xóa sạch container ngay sau khi nó dừng chạy, hãy luôn thêm cờ `--rm`:
 
 ```bash
 docker run -it --rm ubuntu
 ```
 
-## Different Base Images
+---
 
-There are other base images besides `hello-world` and `ubuntu`. For example, Python:
+## Sử Dụng Các Base Images Khác Nhau (Different Base Images)
+
+Ngoài `hello-world` và `ubuntu`, Docker Hub có hàng ngàn base images chuyên dụng khác. Ví dụ với Python:
 
 ```bash
 docker run -it --rm python:3.9.16
-# add -slim to get a smaller version
+# Thêm hậu tố -slim để tải phiên bản nhẹ hơn (python:3.9.16-slim)
 ```
 
-This one starts `python`. If we want bash, we need to overwrite `entrypoint`:
+Lệnh trên sẽ mở thẳng trình thông dịch tương tác của `python`. Nếu bạn muốn mở terminal bash của container đó, hãy ghi đè điểm vào (`entrypoint`):
 
 ```bash
 docker run -it \
@@ -114,16 +124,17 @@ docker run -it \
     python:3.9.16-slim
 ```
 
-## Volumes
+---
 
-So, we know that with docker we can restore any container to its initial state in a reproducible manner. But what about data? A common way to do so is with _volumes_.
+## Cơ Chế Gắn Ổ Đĩa (Volumes)
 
-The durable relationship is that host files can be shared with a container
-through a mounted volume:
+Như đã biết, container là stateless và độc lập. Vậy làm thế nào để lưu trữ dữ liệu hoặc chia sẻ mã nguồn từ máy thật vào container? Giải pháp chuẩn mực là sử dụng **Volumes** (hoặc Bind Mounts).
 
-![Local host files can be shared with a Docker container through a mounted volume.](images/docker-volume-mapping.png)
+Tệp tin từ máy thật (host machine) có thể được chia sẻ vào container thông qua một volume được gắn kết:
 
-Let's create some data in `test`:
+![Các tệp tin từ máy thật có thể được chia sẻ với Docker container thông qua ổ đĩa volume gắn kết.](images/docker-volume-mapping.png)
+
+Hãy cùng thực hành tạo một thư mục dữ liệu `test` trên máy thật:
 
 ```bash
 mkdir test
@@ -133,7 +144,7 @@ echo "Hello from host" > file1.txt
 cd ..
 ```
 
-Now let's create a simple script `test/list_files.py` that shows the files in the folder:
+Tiếp theo, tạo một script Python đơn giản `test/list_files.py` để liệt kê các file trong thư mục:
 
 ```python
 from pathlib import Path
@@ -154,7 +165,7 @@ for filepath in current_dir.iterdir():
         print(f"    Content: {content}")
 ```
 
-Now let's map this to a Python container:
+Bây giờ, hãy ánh xạ thư mục `test` này từ máy thật vào đường dẫn `/app/test` bên trong container Python:
 
 ```bash
 docker run -it \
@@ -164,7 +175,7 @@ docker run -it \
     python:3.9.16-slim
 ```
 
-Inside the container, run:
+Bên trong terminal của container, bạn hãy kiểm tra:
 
 ```bash
 cd /app/test
@@ -173,4 +184,4 @@ cat file1.txt
 python list_files.py
 ```
 
-You'll see the files from your host machine are accessible in the container!
+Bạn sẽ thấy toàn bộ tệp tin từ máy chủ thật xuất hiện và có thể truy cập, đọc/ghi bình thường ngay từ trong container!

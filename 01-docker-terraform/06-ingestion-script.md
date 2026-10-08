@@ -2,27 +2,33 @@
 prev_url: 05-data-ingestion.md
 next_url: 07-pgadmin.md
 ---
-# Creating the Data Ingestion Script
+# Xây Dựng Script Nạp Dữ Liệu Tự Động (Creating the Data Ingestion Script)
 
-Now let's convert the notebook to a Python script.
+Sau khi đã thử nghiệm thành công quy trình nạp dữ liệu trên Jupyter Notebook, bước tiếp theo là chuyển đổi (refactor) logic này thành một script Python độc lập có khả năng nhận tham số dòng lệnh (CLI arguments) để phục vụ tự động hóa và đóng gói vào container.
 
+---
 
-## Convert Notebook to Script
+## 1. Chuyển Đổi Từ Notebook Sang Python Script
+
+Bạn có thể xuất notebook thành tệp `.py` bằng lệnh:
 
 ```bash
 uv run jupyter nbconvert --to=script notebook.ipynb
 mv notebook.py ingest_data.py
 ```
 
-## The Complete Ingestion Script
+---
 
-See the `pipeline/` directory for the complete script with click integration. Here's the core structure:
+## 2. Cấu Trúc Script Nạp Dữ Liệu Hoàn Chỉnh
+
+Mã nguồn đầy đủ nằm trong thư mục `pipeline/`. Dưới đây là các phần cốt lõi:
 
 ```python
 import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
 
+# Định nghĩa trước kiểu dữ liệu để đảm bảo an toàn bộ nhớ và tính toàn vẹn
 dtype = {
     "VendorID": "Int64",
     "passenger_count": "Int64",
@@ -48,30 +54,34 @@ parse_dates = [
 ]
 ```
 
-## Click Integration
+---
 
-The script uses `click` for command-line argument parsing:
+## 3. Tích Hợp Giao Diện Dòng Lệnh Với Thư Viện `click`
+
+Chúng ta sử dụng thư viện `click` để biến script thành một công cụ dòng lệnh (CLI tool) linh hoạt, cho phép truyền các thông số kết nối cơ sở dữ liệu và bảng đích từ bên ngoài:
 
 ```python
 import click
 
 @click.command()
-@click.option('--pg-user', default='root', help='PostgreSQL user')
-@click.option('--pg-pass', default='root', help='PostgreSQL password')
-@click.option('--pg-host', default='localhost', help='PostgreSQL host')
-@click.option('--pg-port', default=5432, type=int, help='PostgreSQL port')
-@click.option('--pg-db', default='ny_taxi', help='PostgreSQL database name')
-@click.option('--target-table', default='yellow_taxi_data', help='Target table name')
+@click.option('--pg-user', default='root', help='Tên người dùng PostgreSQL')
+@click.option('--pg-pass', default='root', help='Mật khẩu PostgreSQL')
+@click.option('--pg-host', default='localhost', help='Địa chỉ máy chủ PostgreSQL')
+@click.option('--pg-port', default=5432, type=int, help='Cổng kết nối PostgreSQL')
+@click.option('--pg-db', default='ny_taxi', help='Tên cơ sở dữ liệu')
+@click.option('--target-table', default='yellow_taxi_data', help='Tên bảng lưu trữ')
 def run(pg_user, pg_pass, pg_host, pg_port, pg_db, target_table):
-    # Ingestion logic here
+    # Toàn bộ logic kết nối database và nạp dữ liệu theo khối (chunking) tại đây
     pass
 ```
 
-## Running the Script
+---
 
-The script reads data in chunks (100,000 rows at a time) to handle large files efficiently without running out of memory.
+## 4. Thực Thi Script Nạp Dữ Liệu
 
-Example usage:
+Script đọc dữ liệu theo từng khối (chunk size = 100,000 dòng) giúp xử lý mượt mà ngay cả khi chạy trên máy chủ có cấu hình RAM khiêm tốn.
+
+Ví dụ lệnh chạy thực tế:
 
 ```bash
 uv run python ingest_data.py \

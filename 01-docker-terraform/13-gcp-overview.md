@@ -3,52 +3,62 @@ video_url: https://www.youtube.com/watch?v=18jIzE41fJ4
 prev_url: 12-terraform-overview.md
 next_url: ../02-workflow-orchestration/01-what-is-workflow-orchestration.md
 ---
-# GCP Overview
+# Tổng Quan Về Nền Tảng Google Cloud (GCP Overview)
 
+Trong suốt khóa học này, chúng ta sẽ sử dụng nền tảng đám mây **Google Cloud Platform (GCP)** làm môi trường thực hành chính.
 
-## Project infrastructure modules in GCP:
-* Google Cloud Storage (GCS): Data Lake
-* BigQuery: Data Warehouse
+## Các Dịch Vụ Cốt Lõi Trên GCP Được Sử Dụng Trong Khóa Học:
+* **Google Cloud Storage (GCS)**: Đóng vai trò là **Hồ dữ liệu (Data Lake)** — lưu trữ dữ liệu thô ở mọi định dạng (CSV, Parquet) với chi phí thấp và độ bền cao.
+* **Google BigQuery**: Đóng vai trò là **Kho dữ liệu (Data Warehouse)** — công cụ phân tích dữ liệu quy mô Petabyte theo kiến trúc serverless, hỗ trợ SQL tiêu chuẩn và BigQuery ML.
 
-Cloud platforms group their services into families such as compute,
-networking, storage, big data, identity, and machine learning:
+Các nền tảng đám mây phân chia dịch vụ của họ thành các nhóm chuyên biệt như điện toán (compute), mạng (networking), lưu trữ (storage), dữ liệu lớn (big data), danh tính & bảo mật (identity), và máy học (machine learning):
 
-![Cloud services grouped into compute, management, networking, storage and databases, big data, identity and security, and machine learning families.](images/cloud-service-families.png)
+![Các nhóm dịch vụ điện toán đám mây: Compute, Management, Networking, Storage & Databases, Big Data, Identity & Security, Machine Learning.](images/cloud-service-families.png)
 
-(Concepts explained in Week 2 - Data Ingestion)
+---
 
-## Initial Setup
-For this course, we'll use a free version (upto EUR 300 credits).
+## 1. Các Bước Khởi Tạo Tài Khoản Ban Đầu (Initial Setup)
 
-1. Create an account with your Google email ID
-2. Setup your first [project](https://console.cloud.google.com/) if you haven't already
-    * eg. "DTC DE Course", and note down the "Project ID" (we'll use this later when deploying infra with TF)
-3. Setup [service account & authentication](https://cloud.google.com/docs/authentication/getting-started) for this project
-    * Grant `Viewer` role to begin with.
-    * Download service-account-keys (.json) for auth.
-4. Download [SDK](https://cloud.google.com/sdk/docs/quickstart) for local setup
-5. Set environment variable to point to your downloaded GCP keys:
-   ```shell
-   export GOOGLE_APPLICATION_CREDENTIALS="<path/to/your/service-account-authkeys>.json"
+Google Cloud cung cấp gói dùng thử miễn phí (Free Tier) với $300 tín dụng (credits) cho người dùng mới.
 
-   # Refresh token/session, and verify authentication
+1. Đăng ký tài khoản tại [Google Cloud Console](https://console.cloud.google.com/) bằng địa chỉ Gmail của bạn.
+2. Tạo một Dự án mới (Project):
+   * Đặt tên gợi nhớ, ví dụ: `dtc-de-zoomcamp`, và ghi chú lại giá trị **Project ID** (chúng ta sẽ dùng ID này khi viết cấu hình Terraform).
+3. Tạo **Tài khoản dịch vụ (Service Account)** phục vụ tự động hóa:
+   * Vào mục *IAM & Admin* → *Service Accounts* → Nhấn *Create Service Account*.
+   * Gán tạm quyền `Viewer`.
+   * Tạo và tải về khóa xác thực dạng JSON (`service-account-key.json`).
+4. Cài đặt công cụ dòng lệnh [Google Cloud CLI (gcloud SDK)](https://cloud.google.com/sdk/docs/quickstart).
+5. Thiết lập biến môi trường trỏ tới tệp khóa JSON vừa tải về:
+   ```bash
+   # Trên Linux/macOS hoặc Git Bash:
+   export GOOGLE_APPLICATION_CREDENTIALS="/duong/dan/toi/khoa-service-account.json"
+
+   # Trên Windows PowerShell:
+   $env:GOOGLE_APPLICATION_CREDENTIALS="C:\duong\dan\toi\khoa-service-account.json"
+
+   # Đăng nhập Application Default Credentials (ADC)
    gcloud auth application-default login
    ```
 
-## Setup for Access
-1. [IAM Roles](https://cloud.google.com/storage/docs/access-control/iam-roles) for Service account:
-   * Go to the *IAM* section of *IAM & Admin* https://console.cloud.google.com/iam-admin/iam
-   * Click the *Edit principal* icon for your service account.
-   * Add these roles in addition to *Viewer* : **Storage Admin** + **Storage Object Admin** + **BigQuery Admin**
+---
 
-2. Enable these APIs for your project:
-   * https://console.cloud.google.com/apis/library/iam.googleapis.com
-   * https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com
+## 2. Cấp Quyền Truy Cập Cần Thiết (IAM Roles)
 
-3. Please ensure `GOOGLE_APPLICATION_CREDENTIALS` env-var is set.
-   ```shell
-   export GOOGLE_APPLICATION_CREDENTIALS="<path/to/your/service-account-authkeys>.json"
-   ```
+1. Cấp quyền truy cập cho Service Account:
+   * Vào mục [IAM & Admin](https://console.cloud.google.com/iam-admin/iam).
+   * Nhấp biểu tượng sửa quyền của Service Account bạn vừa tạo.
+   * Thêm các vai trò (roles) quan trọng sau:
+     * **Storage Admin** (Quản trị toàn quyền Cloud Storage)
+     * **Storage Object Admin** (Tạo, đọc, ghi đối tượng trong bucket)
+     * **BigQuery Admin** (Quản trị toàn quyền BigQuery)
+2. Kích hoạt các API cần thiết cho dự án:
+   * [IAM API](https://console.cloud.google.com/apis/library/iam.googleapis.com)
+   * [IAM Credentials API](https://console.cloud.google.com/apis/library/iamcredentials.googleapis.com)
+3. Đảm bảo biến môi trường `GOOGLE_APPLICATION_CREDENTIALS` đã được thiết lập chính xác trên terminal của bạn trước khi chạy Terraform.
 
-## Terraform Workshop to create GCP Infra
-Continue [here](./terraform): `week_1_basics_n_setup/1_terraform_gcp/terraform`
+---
+
+## Thực Hành Tạo Hạ Tầng GCP Bằng Terraform
+
+Tiếp tục bài thực hành chi tiết tạo bucket và dataset trên GCP tại: [Thư mục cấu hình Terraform (terraform/)](./terraform).

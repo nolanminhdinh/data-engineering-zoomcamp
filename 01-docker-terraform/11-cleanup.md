@@ -2,92 +2,107 @@
 prev_url: 10-sql-refresher.md
 next_url: 12-terraform-overview.md
 ---
-# Cleanup
+# Dọn Dẹp Tài Nguyên Sau Thực Hành (Cleanup)
 
-When you're done with the workshop, clean up Docker resources to free up disk space.
+Sau khi hoàn thành các bài thực hành, bạn nên tiến hành dọn dẹp các tài nguyên Docker và tệp tạm để giải phóng dung lượng ổ cứng.
 
+---
 
-## Stop All Running Containers
+## 1. Dừng Toàn Bộ Các Container Đang Chạy
+
+Tại thư mục chứa tệp `docker-compose.yaml`:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
-## Remove Specific Containers
+---
+
+## 2. Xóa Các Container Đã Dừng
 
 ```bash
-# List all containers
+# Xem danh sách tất cả các container
 docker ps -a
 
-# Remove specific container
-docker rm <container_id>
+# Xóa một container cụ thể theo ID hoặc tên
+docker rm <container_id_hoac_name>
 
-# Remove all stopped containers
+# Xóa toàn bộ các container đã dừng hoạt động
 docker container prune
 ```
 
-## Remove Docker Images
+---
+
+## 3. Xóa Các Docker Images Không Dùng Đến
 
 ```bash
-# List all images
+# Liệt kê tất cả các images
 docker images
 
-# Remove specific image
+# Xóa image thực hành nạp dữ liệu
 docker rmi taxi_ingest:v001
 
-# Remove all unused images
+# Dọn dẹp tất cả các images không còn container nào sử dụng
 docker image prune -a
 ```
 
-## Remove Docker Volumes
+---
+
+## 4. Xóa Các Docker Volumes (Ổ Đĩa Dữ Liệu)
 
 ```bash
-# List volumes
+# Liệt kê danh sách các volumes
 docker volume ls
 
-# Remove specific volumes
+# Xóa cụ thể các volume thực hành
 docker volume rm ny_taxi_postgres_data
 docker volume rm pgadmin_data
 
-# Remove all unused volumes
+# Xóa toàn bộ volumes rác không được gắn vào container nào
 docker volume prune
 ```
 
-## Remove Docker Networks
+---
+
+## 5. Xóa Các Mạng Ảo Docker (Networks)
 
 ```bash
-# List networks
+# Liệt kê các mạng ảo
 docker network ls
 
-# Remove specific network
+# Xóa mạng pg-network đã tạo
 docker network rm pg-network
 
-# Remove all unused networks
+# Xóa tất cả các mạng ảo không còn dùng đến
 docker network prune
 ```
 
-## Complete Cleanup
+---
 
-Removes ALL Docker resources - use with caution!
+## 6. Lệnh Dọn Sạch Toàn Diện Cực Nhanh (Complete Cleanup)
+
+> [!CAUTION]
+> Lệnh này sẽ xóa TOÀN BỘ container đã dừng, toàn bộ images không dùng, toàn bộ networks và toàn bộ volumes. Hãy cẩn trọng nếu máy bạn có các dự án Docker khác đang lưu dữ liệu quan trọng!
 
 ```bash
-# ⚠️ Warning: This removes ALL Docker resources!
 docker system prune -a --volumes
 ```
 
-## Clean Up Local Files
+---
+
+## 7. Dọn Dẹp Các Tệp Tin Rác Trên Máy Cục Bộ
 
 ```bash
-# Remove parquet files
+# Xóa các tệp parquet sinh ra khi chạy thử nghiệm
 rm *.parquet
 
-# Remove Python cache
+# Xóa bộ nhớ đệm Python
 rm -rf __pycache__ .pytest_cache
 
-# Remove virtual environment (if using venv)
+# Xóa môi trường ảo nếu muốn cài đặt lại từ đầu
 rm -rf .venv
 ```
 
 ---
 
-That's all for today. Happy learning! 🐳📊
+Chúc bạn có những trải nghiệm học tập và thực hành hiệu quả! 🐳📊
